@@ -26,14 +26,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsMounted(true);
-    const savedLayout = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedLayout) {
-      setWidgets(JSON.parse(savedLayout));
-    } else {
-      // Default layout for new users
-      setWidgets([
-        { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 } },
-      ]);
+    try {
+      const savedLayout = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedLayout) {
+        setWidgets(JSON.parse(savedLayout));
+      } else {
+        // Default layout for new users
+        setWidgets([
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 } },
+        ]);
+      }
+    } catch (error) {
+        console.error("Failed to parse layout from localStorage", error);
+         setWidgets([
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 } },
+        ]);
     }
   }, []);
 

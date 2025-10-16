@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 
 export function ClockWidget() {
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
+    setTime(new Date());
     const timerId = setInterval(() => {
       setTime(new Date());
     }, 1000);
@@ -14,6 +15,17 @@ export function ClockWidget() {
       clearInterval(timerId);
     };
   }, []);
+
+  if (!time) {
+    return (
+        <div className="flex h-full w-full items-center justify-center p-4">
+            <div className="text-center">
+                <h2 className="text-5xl font-bold tracking-wider text-foreground tabular-nums">--:--</h2>
+                <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="flex h-full w-full items-center justify-center p-4">
