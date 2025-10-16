@@ -39,7 +39,7 @@ export default function Dashboard() {
     } catch (error) {
         console.error("Failed to parse layout from localStorage", error);
          setWidgets([
-          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 } },
+          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 } },
         ]);
     }
   }, []);
