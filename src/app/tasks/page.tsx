@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, ArrowLeft, Save, Repeat } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Repeat, CalendarIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -19,7 +19,8 @@ import { cn } from '@/lib/utils';
 
 
 type RepeatType = 'daily' | 'weekly' | 'monthly' | 'none';
-type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+type DayOfWeek = 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+
 type Month = 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december';
 
 interface RepeatOptions {
@@ -36,9 +37,45 @@ interface Task {
   repeat: RepeatOptions;
 }
 
-const weekdays: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const weekdays: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const months: Month[] = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 const currentMonthName = months[new Date().getMonth()];
+
+const getRepeatSummary = (repeat: RepeatOptions) => {
+    switch (repeat.type) {
+        case 'daily':
+            return 'Daily';
+        case 'weekly':
+            if (!repeat.days || repeat.days.length === 0) return 'Weekly';
+            if (repeat.days.length === 7) return 'Everyday';
+            if (repeat.days.length === 1) return repeat.days[0].charAt(0).toUpperCase() + repeat.days[0].slice(1, 3);
+            
+            // Check for consecutive days
+            const dayIndexes = repeat.days.map(d => weekdays.indexOf(d)).sort((a,b) => a - b);
+            let isConsecutive = true;
+            for(let i=0; i< dayIndexes.length - 1; i++) {
+                if(dayIndexes[i+1] !== dayIndexes[i] + 1) {
+                    isConsecutive = false;
+                    break;
+                }
+            }
+            if(isConsecutive) {
+                const startDay = weekdays[dayIndexes[0]].substring(0,1).toUpperCase();
+                const endDay = weekdays[dayIndexes[dayIndexes.length - 1]].substring(0,1).toUpperCase();
+                return `${startDay}-${endDay}`;
+            }
+
+            return repeat.days.map(d => d.substring(0,1).toUpperCase()).join(', ');
+
+        case 'monthly':
+            if (repeat.month && repeat.dayOfMonth) {
+                return `${repeat.month.substring(0,3)} ${repeat.dayOfMonth}`;
+            }
+            return 'Monthly';
+        default:
+            return null;
+    }
+}
 
 
 export default function TasksPage() {
@@ -97,31 +134,44 @@ export default function TasksPage() {
     setSelectedTaskId(null);
   };
   
-  const handleSaveRepeat = () => {
-    if (selectedTaskId !== null) {
-      setTasks(tasks.map(task => {
-        if (task.id === selectedTaskId) {
-          const newRepeat: RepeatOptions = { type: repeatType };
-          if (repeatType === 'weekly') {
-            newRepeat.days = selectedDays;
-          }
-          if (repeatType === 'monthly') {
-            newRepeat.dayOfMonth = selectedDayOfMonth;
-            newRepeat.month = selectedMonth;
-          }
-          return { ...task, repeat: newRepeat };
-        }
-        return task;
-      }));
-      handleBackToList();
-    }
+  const updateTaskRepeat = (taskId: number, repeatOptions: RepeatOptions) => {
+    setTasks(tasks.map(task => 
+      task.id === taskId ? { ...task, repeat: repeatOptions } : task
+    ));
+    handleBackToList();
   };
 
   const handleDaySelection = (day: DayOfWeek) => {
-    setSelectedDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    )
+    const newSelectedDays = selectedDays.includes(day)
+      ? selectedDays.filter(d => d !== day)
+      : [...selectedDays, day];
+    
+    setSelectedDays(newSelectedDays);
+
+    if(selectedTaskId !== null) {
+        updateTaskRepeat(selectedTaskId, { type: 'weekly', days: newSelectedDays });
+    }
+  };
+
+  const handleDayOfMonthSelection = (day: number) => {
+      setSelectedDayOfMonth(day);
+      if(selectedTaskId !== null) {
+          updateTaskRepeat(selectedTaskId, { type: 'monthly', dayOfMonth: day, month: selectedMonth });
+      }
   }
+
+  const handleRepeatTypeChange = (value: RepeatType) => {
+    setRepeatType(value);
+    if(selectedTaskId) {
+      if(value === 'daily' || value === 'none') {
+        updateTaskRepeat(selectedTaskId, { type: value });
+      } else {
+        // For weekly/monthly, we wait for further user input
+        setTasks(tasks.map(task => task.id === selectedTaskId ? { ...task, repeat: {type: value} } : task));
+      }
+    }
+  }
+
 
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
 
@@ -142,7 +192,7 @@ export default function TasksPage() {
                 <Repeat className="h-5 w-5 text-muted-foreground" />
                 <Label className="text-base font-medium">Repeat</Label>
               </div>
-              <Select value={repeatType} onValueChange={(value) => setRepeatType(value as RepeatType)}>
+              <Select value={repeatType} onValueChange={(value) => handleRepeatTypeChange(value as RepeatType)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
@@ -158,17 +208,20 @@ export default function TasksPage() {
 
             {repeatType === 'weekly' && (
               <Card className="p-4 bg-background/50">
-                <h4 className="font-medium mb-3">Repeat on</h4>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="flex justify-between items-center">
                     {weekdays.map(day => (
-                        <Button 
+                        <button
                             key={day} 
-                            variant={selectedDays.includes(day) ? 'secondary' : 'ghost'}
                             onClick={() => handleDaySelection(day)}
-                            className="capitalize"
+                            className={cn(
+                                "flex items-center justify-center h-9 w-9 rounded-full border-2 transition-colors",
+                                selectedDays.includes(day) 
+                                    ? "border-primary bg-primary/10 text-primary-foreground" 
+                                    : "border-transparent hover:bg-secondary"
+                            )}
                         >
-                            {day.substring(0,3)}
-                        </Button>
+                            <span className="text-sm font-medium">{day.substring(0,1).toUpperCase()}</span>
+                        </button>
                     ))}
                 </div>
               </Card>
@@ -195,7 +248,7 @@ export default function TasksPage() {
                       key={day}
                       variant={selectedDayOfMonth === day ? 'secondary' : 'ghost'}
                       size="icon"
-                      onClick={() => setSelectedDayOfMonth(day)}
+                      onClick={() => handleDayOfMonthSelection(day)}
                       className="h-9 w-9"
                     >
                       {day}
@@ -205,11 +258,6 @@ export default function TasksPage() {
               </Card>
             )}
 
-
-            <Button onClick={handleSaveRepeat} className="w-full">
-              <Save className="mr-2 h-4 w-4" />
-              Save Repeat Settings
-            </Button>
           </div>
         </div>
       </main>
@@ -251,15 +299,23 @@ export default function TasksPage() {
                         onCheckedChange={() => toggleTaskCompletion(task.id)}
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <label
-                        htmlFor={`task-${task.id}`}
-                        className={cn(
-                          'flex-grow text-base cursor-pointer',
-                          task.completed ? 'text-muted-foreground line-through' : ''
+                      <div className='flex-grow'>
+                        <label
+                          htmlFor={`task-${task.id}`}
+                          className={cn(
+                            'text-base cursor-pointer',
+                            task.completed ? 'text-muted-foreground line-through' : ''
+                          )}
+                        >
+                          {task.text}
+                        </label>
+                        {task.repeat.type !== 'none' && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
+                                <Repeat className="h-3 w-3" />
+                                <span>{getRepeatSummary(task.repeat)}</span>
+                            </div>
                         )}
-                      >
-                        {task.text}
-                      </label>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
