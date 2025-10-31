@@ -19,6 +19,8 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
 
 const LOCAL_STORAGE_KEY = 'dark-knight-dashboard-layout';
 
+const DEFAULT_WIDGET_SIZE = { width: 280, height: 150 };
+
 export default function Dashboard() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -33,13 +35,13 @@ export default function Dashboard() {
       } else {
         // Default layout for new users
         setWidgets([
-          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, isLocked: false },
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false },
         ]);
       }
     } catch (error) {
         console.error("Failed to parse layout from localStorage", error);
          setWidgets([
-          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, isLocked: false },
+          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false },
         ]);
     }
   }, []);
@@ -49,6 +51,7 @@ export default function Dashboard() {
       id: `widget-${Date.now()}`,
       type,
       position: { x: 50, y: 50 }, // Default position
+      size: DEFAULT_WIDGET_SIZE,
       isLocked: false,
     };
     setWidgets((prev) => [...prev, newWidget]);
@@ -58,6 +61,14 @@ export default function Dashboard() {
     setWidgets((prevWidgets) =>
       prevWidgets.map((widget) =>
         widget.id === id ? { ...widget, position } : widget
+      )
+    );
+  }, []);
+
+  const updateWidgetSize = useCallback((id: string, size: { width: number; height: number }) => {
+    setWidgets((prevWidgets) =>
+      prevWidgets.map((widget) =>
+        widget.id === id ? { ...widget, size } : widget
       )
     );
   }, []);
@@ -93,6 +104,7 @@ export default function Dashboard() {
             key={widget.id}
             widget={widget}
             updateWidgetPosition={updateWidgetPosition}
+            updateWidgetSize={updateWidgetSize}
             toggleWidgetLock={toggleWidgetLock}
           >
             {WidgetComponent ? <WidgetComponent /> : <div>Unknown Widget</div>}
