@@ -78,8 +78,7 @@ export default function TasksPage() {
                       <Checkbox
                         id={`task-${task.id}`}
                         checked={task.completed}
-                        onCheckedChange={(e) => {
-                            e.stopPropagation();
+                        onCheckedChange={() => {
                             toggleTaskCompletion(task.id);
                         }}
                         onClick={(e) => e.stopPropagation()}
@@ -89,7 +88,10 @@ export default function TasksPage() {
                         className={`flex-grow text-base cursor-pointer ${
                           task.completed ? 'text-muted-foreground line-through' : ''
                         }`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTaskCompletion(task.id);
+                        }}
                       >
                         {task.text}
                       </label>
