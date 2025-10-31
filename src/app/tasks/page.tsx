@@ -49,7 +49,7 @@ export default function TasksPage() {
   return (
     <main className="p-8 md:p-12">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6">Tasks</h1>
+        <h1 className="text-4xl font-bold mb-6 text-left">Tasks</h1>
 
         <form onSubmit={handleAddTask} className="flex items-center gap-2 mb-8">
           <Input
@@ -88,8 +88,7 @@ export default function TasksPage() {
                         className={`flex-grow text-base cursor-pointer ${
                           task.completed ? 'text-muted-foreground line-through' : ''
                         }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        onClick={() => {
                           toggleTaskCompletion(task.id);
                         }}
                       >
