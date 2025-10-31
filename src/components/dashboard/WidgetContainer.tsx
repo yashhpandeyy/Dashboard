@@ -50,7 +50,7 @@ export function WidgetContainer({ widget, children, updateWidgetPosition, toggle
 
   return (
     <div
-      className="absolute flex flex-col bg-card/10 backdrop-blur-md border border-primary/20 rounded-xl shadow-lg"
+      className="absolute flex flex-col bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg"
       style={{
         transform: `translate(${widget.position.x}px, ${widget.position.y}px)`,
         minWidth: '280px',
