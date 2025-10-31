@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Settings, Check, ExternalLink } from 'lucide-react';
+import { Settings, Check, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface LinkWidgetProps {
     widgetData?: {
@@ -28,6 +29,17 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
         setIsEditing(false);
     }
   };
+
+  const getFaviconUrl = (link: string) => {
+    try {
+      const urlObject = new URL(link);
+      return `https://www.google.com/s2/favicons?domain=${urlObject.hostname}&sz=64`;
+    } catch (error) {
+      return null;
+    }
+  };
+  
+  const favicon = widgetData?.url ? getFaviconUrl(widgetData.url) : null;
 
   if (isEditing) {
     return (
@@ -55,24 +67,39 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
 
   return (
     <div 
-        className="relative flex h-full w-full cursor-pointer items-center justify-center p-4 group"
+        className="group relative flex h-full w-full cursor-pointer flex-col justify-between p-4"
         onClick={() => window.open(widgetData?.url, '_blank')}
     >
-      <h3 className="text-xl font-bold text-center text-foreground break-all">
-        {widgetData?.title}
-      </h3>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-1 left-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-        }}
-      >
-        <Settings className="h-4 w-4" />
-      </Button>
-      <ExternalLink className="absolute bottom-2 right-2 h-4 w-4 text-muted-foreground/50" />
+        <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+                {favicon ? (
+                    <img src={favicon} alt={`${widgetData?.title} favicon`} className="h-8 w-8 rounded-md" />
+                ) : (
+                    <div className="h-8 w-8 rounded-md bg-secondary flex items-center justify-center">
+                        <LinkIcon className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                )}
+                <h3 className="text-xl font-bold text-foreground break-words">
+                    {widgetData?.title}
+                </h3>
+            </div>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-1 right-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                }}
+            >
+                <Settings className="h-4 w-4" />
+            </Button>
+        </div>
+        
+        <div className="flex items-center gap-2 pt-2">
+            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+            <p className="truncate text-sm text-muted-foreground/70">{widgetData?.url?.replace(/^https?:\/\//, '')}</p>
+        </div>
     </div>
   );
 }
