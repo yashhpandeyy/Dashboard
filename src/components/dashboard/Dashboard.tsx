@@ -33,13 +33,13 @@ export default function Dashboard() {
       } else {
         // Default layout for new users
         setWidgets([
-          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 } },
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, isLocked: false },
         ]);
       }
     } catch (error) {
         console.error("Failed to parse layout from localStorage", error);
          setWidgets([
-          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 } },
+          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, isLocked: false },
         ]);
     }
   }, []);
@@ -49,6 +49,7 @@ export default function Dashboard() {
       id: `widget-${Date.now()}`,
       type,
       position: { x: 50, y: 50 }, // Default position
+      isLocked: false,
     };
     setWidgets((prev) => [...prev, newWidget]);
   }, []);
@@ -57,6 +58,14 @@ export default function Dashboard() {
     setWidgets((prevWidgets) =>
       prevWidgets.map((widget) =>
         widget.id === id ? { ...widget, position } : widget
+      )
+    );
+  }, []);
+
+  const toggleWidgetLock = useCallback((id: string) => {
+    setWidgets((prevWidgets) =>
+      prevWidgets.map((widget) =>
+        widget.id === id ? { ...widget, isLocked: !widget.isLocked } : widget
       )
     );
   }, []);
@@ -84,6 +93,7 @@ export default function Dashboard() {
             key={widget.id}
             widget={widget}
             updateWidgetPosition={updateWidgetPosition}
+            toggleWidgetLock={toggleWidgetLock}
           >
             {WidgetComponent ? <WidgetComponent /> : <div>Unknown Widget</div>}
           </WidgetContainer>

@@ -3,21 +3,23 @@
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
 import type { WidgetInstance } from '@/lib/types';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Pin, PinOff } from 'lucide-react';
+import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 interface WidgetContainerProps {
   widget: WidgetInstance;
   children: ReactNode;
   updateWidgetPosition: (id: string, position: { x: number; y: number }) => void;
+  toggleWidgetLock: (id: string) => void;
 }
 
-export function WidgetContainer({ widget, children, updateWidgetPosition }: WidgetContainerProps) {
+export function WidgetContainer({ widget, children, updateWidgetPosition, toggleWidgetLock }: WidgetContainerProps) {
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const initialWidgetPos = useRef<{ x: number; y: number } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Prevent drag on right-click
-    if (e.button !== 0) return;
+    if (widget.isLocked || e.button !== 0) return;
 
     dragStartPos.current = { x: e.clientX, y: e.clientY };
     initialWidgetPos.current = widget.position;
@@ -43,6 +45,8 @@ export function WidgetContainer({ widget, children, updateWidgetPosition }: Widg
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
+  
+  const isLocked = widget.isLocked ?? false;
 
   return (
     <div
@@ -53,12 +57,24 @@ export function WidgetContainer({ widget, children, updateWidgetPosition }: Widg
         minHeight: '150px',
       }}
     >
-      <div
-        className="flex h-8 cursor-grab items-center justify-center rounded-t-xl bg-black/20 active:cursor-grabbing"
-        onMouseDown={handleMouseDown}
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </div>
+        <div
+            className={cn(
+            'relative flex h-8 items-center justify-center rounded-t-xl bg-black/20',
+            !isLocked && 'cursor-grab active:cursor-grabbing'
+            )}
+            onMouseDown={handleMouseDown}
+        >
+            {!isLocked && <GripVertical className="h-5 w-5 text-muted-foreground" />}
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => toggleWidgetLock(widget.id)}
+            >
+                {isLocked ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
+                <span className="sr-only">{isLocked ? 'Unpin' : 'Pin'} widget</span>
+            </Button>
+        </div>
       <div className="flex-grow">{children}</div>
     </div>
   );

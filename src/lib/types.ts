@@ -4,5 +4,6 @@ export interface WidgetInstance {
   id: string;
   type: WidgetType;
   position: { x: number; y: number };
+  isLocked?: boolean;
   data?: any;
 }
