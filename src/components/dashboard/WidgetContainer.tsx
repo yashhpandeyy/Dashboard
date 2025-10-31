@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { WidgetInstance } from '@/lib/types';
 import { GripVertical, Circle, CircleDot } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -13,6 +13,8 @@ interface WidgetContainerProps {
   updateWidgetPosition: (id: string, position: { x: number; y: number }) => void;
   updateWidgetSize: (id: string, size: { width: number; height: number }) => void;
   toggleWidgetLock: (id: string) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
 export function WidgetContainer({ 
@@ -20,7 +22,9 @@ export function WidgetContainer({
   children, 
   updateWidgetPosition, 
   updateWidgetSize, 
-  toggleWidgetLock 
+  toggleWidgetLock,
+  onDragStart,
+  onDragEnd,
 }: WidgetContainerProps) {
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const initialWidgetPos = useRef<{ x: number; y: number } | null>(null);
@@ -32,6 +36,7 @@ export function WidgetContainer({
   const handleDragMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (widget.isLocked || e.button !== 0) return;
 
+    onDragStart();
     dragStartPos.current = { x: e.clientX, y: e.clientY };
     initialWidgetPos.current = widget.position;
     document.addEventListener('mousemove', handleDragMouseMove);
@@ -51,6 +56,7 @@ export function WidgetContainer({
   };
 
   const handleDragMouseUp = () => {
+    onDragEnd();
     dragStartPos.current = null;
     initialWidgetPos.current = null;
     document.removeEventListener('mousemove', handleDragMouseMove);
@@ -62,6 +68,7 @@ export function WidgetContainer({
     e.stopPropagation(); // Prevent triggering the drag handler
     if (widget.isLocked || e.button !== 0) return;
 
+    onDragStart();
     resizeStartPos.current = { x: e.clientX, y: e.clientY };
     initialWidgetSize.current = widget.size;
     document.addEventListener('mousemove', handleResizeMouseMove);
@@ -81,6 +88,7 @@ export function WidgetContainer({
   };
 
   const handleResizeMouseUp = () => {
+    onDragEnd();
     resizeStartPos.current = null;
     initialWidgetSize.current = null;
     document.removeEventListener('mousemove', handleResizeMouseMove);
@@ -92,7 +100,7 @@ export function WidgetContainer({
   return (
     <div
       className={cn(
-        "absolute flex flex-col bg-black/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg",
+        "absolute flex flex-col bg-black/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg transition-transform",
         !isLocked && 'cursor-grab active:cursor-grabbing'
       )}
       style={{

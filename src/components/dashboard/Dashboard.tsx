@@ -11,6 +11,7 @@ import { CountdownWidget } from './widgets/CountdownWidget';
 import { Button } from '../ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TrashZone } from './TrashZone';
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   Clock: ClockWidget,
@@ -26,6 +27,7 @@ const DEFAULT_WIDGET_SIZE = { width: 280, height: 150 };
 export default function Dashboard() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [draggingWidgetId, setDraggingWidgetId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,6 +59,10 @@ export default function Dashboard() {
       isLocked: false,
     };
     setWidgets((prev) => [...prev, newWidget]);
+  }, []);
+
+  const removeWidget = useCallback((id: string) => {
+    setWidgets((prev) => prev.filter((widget) => widget.id !== id));
   }, []);
 
   const updateWidgetPosition = useCallback((id: string, position: { x: number; y: number }) => {
@@ -108,6 +114,8 @@ export default function Dashboard() {
             updateWidgetPosition={updateWidgetPosition}
             updateWidgetSize={updateWidgetSize}
             toggleWidgetLock={toggleWidgetLock}
+            onDragStart={() => setDraggingWidgetId(widget.id)}
+            onDragEnd={() => setDraggingWidgetId(null)}
           >
             {WidgetComponent ? <WidgetComponent /> : <div>Unknown Widget</div>}
           </WidgetContainer>
@@ -123,6 +131,15 @@ export default function Dashboard() {
         <Save className="mr-2 h-5 w-5" />
         Save Layout
       </Button>
+      
+      <TrashZone
+        isDragging={!!draggingWidgetId}
+        onDrop={() => {
+          if (draggingWidgetId) {
+            removeWidget(draggingWidgetId);
+          }
+        }}
+      />
     </>
   );
 }
