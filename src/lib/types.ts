@@ -9,7 +9,3 @@ export interface WidgetInstance {
   backgroundDisabled?: boolean;
   data?: any;
 }
-
-export type SearchSuggestion = {
-    suggestion: string;
-}
