@@ -128,6 +128,7 @@ export function WidgetContainer({
            <GripVertical className="h-5 w-5 text-muted-foreground/50" />
          </div>
        )}
+       {!backgroundDisabled && (
         <Button
           variant="ghost"
           size="icon"
@@ -141,6 +142,7 @@ export function WidgetContainer({
           {isLocked ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
           <span className="sr-only">{isLocked ? 'Unlock' : 'Lock'} widget</span>
         </Button>
+       )}
 
       <div className="flex-grow h-full overflow-hidden rounded-xl">{children}</div>
       {!isLocked && (
