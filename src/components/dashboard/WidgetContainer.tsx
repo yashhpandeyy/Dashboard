@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { WidgetInstance } from '@/lib/types';
 import { GripVertical, Circle, CircleDot } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -83,8 +83,8 @@ export function WidgetContainer({
     const dx = e.clientX - resizeStartPos.current.x;
     const dy = e.clientY - resizeStartPos.current.y;
 
-    const newWidth = Math.max(280, initialWidgetSize.current.width + dx);
-    const newHeight = Math.max(150, initialWidgetSize.current.height + dy);
+    const newWidth = Math.max(200, initialWidgetSize.current.width + dx);
+    const newHeight = Math.max(80, initialWidgetSize.current.height + dy);
 
     updateWidgetSize(widget.id, { width: newWidth, height: newHeight });
   };

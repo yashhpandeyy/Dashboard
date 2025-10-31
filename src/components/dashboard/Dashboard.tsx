@@ -8,16 +8,18 @@ import { ClockWidget } from './widgets/ClockWidget';
 import { SearchWidget } from './widgets/SearchWidget';
 import { TabsWidget } from './widgets/TabsWidget';
 import { CountdownWidget } from './widgets/CountdownWidget';
+import { LinkWidget } from './widgets/LinkWidget';
 import { Button } from '../ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TrashZone } from './TrashZone';
 
-const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
+const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType<any>> = {
   Clock: ClockWidget,
   Search: SearchWidget,
   Tabs: TabsWidget,
   Countdown: CountdownWidget,
+  Link: LinkWidget,
 };
 
 const LOCAL_STORAGE_KEY = 'dark-knight-dashboard-layout';
@@ -55,7 +57,7 @@ export default function Dashboard() {
       id: `widget-${Date.now()}`,
       type,
       position: { x: 50, y: 50 }, // Default position
-      size: DEFAULT_WIDGET_SIZE,
+      size: type === 'Link' ? { width: 280, height: 100 } : DEFAULT_WIDGET_SIZE,
       isLocked: false,
       backgroundDisabled: false,
     };
@@ -78,6 +80,14 @@ export default function Dashboard() {
     setWidgets((prevWidgets) =>
       prevWidgets.map((widget) =>
         widget.id === id ? { ...widget, size } : widget
+      )
+    );
+  }, []);
+
+  const updateWidgetData = useCallback((id: string, data: any) => {
+     setWidgets((prevWidgets) =>
+      prevWidgets.map((widget) =>
+        widget.id === id ? { ...widget, data: {...widget.data, ...data} } : widget
       )
     );
   }, []);
@@ -127,7 +137,7 @@ export default function Dashboard() {
             onDragStart={() => setDraggingWidgetId(widget.id)}
             onDragEnd={() => setDraggingWidgetId(null)}
           >
-            {WidgetComponent ? <WidgetComponent /> : <div>Unknown Widget</div>}
+            {WidgetComponent ? <WidgetComponent widgetData={widget.data} updateWidgetData={(data: any) => updateWidgetData(widget.id, data)} /> : <div>Unknown Widget</div>}
           </WidgetContainer>
         );
       })}

@@ -1,4 +1,4 @@
-export type WidgetType = 'Clock' | 'Search' | 'Tabs' | 'Countdown';
+export type WidgetType = 'Clock' | 'Search' | 'Tabs' | 'Countdown' | 'Link';
 
 export interface WidgetInstance {
   id: string;
