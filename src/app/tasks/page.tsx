@@ -21,11 +21,13 @@ import { cn } from '@/lib/utils';
 
 type RepeatType = 'daily' | 'weekly' | 'monthly' | 'none';
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+type Month = 'january' | 'february' | 'march' | 'april' | 'may' | 'june' | 'july' | 'august' | 'september' | 'october' | 'november' | 'december';
 
 interface RepeatOptions {
   type: RepeatType;
   days?: DayOfWeek[]; // For weekly repeats
   dayOfMonth?: number; // For monthly repeats
+  month?: Month; // For monthly repeats
 }
 
 interface Task {
@@ -37,6 +39,7 @@ interface Task {
 
 const weekdays: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const monthDays = Array.from({ length: 31 }, (_, i) => i + 1);
+const months: Month[] = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 
 
 export default function TasksPage() {
@@ -48,6 +51,7 @@ export default function TasksPage() {
   const [repeatType, setRepeatType] = useState<RepeatType>('none');
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [selectedDayOfMonth, setSelectedDayOfMonth] = useState<number | undefined>(undefined);
+  const [selectedMonth, setSelectedMonth] = useState<Month | undefined>(undefined);
 
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -78,6 +82,7 @@ export default function TasksPage() {
     setRepeatType(task.repeat.type);
     setSelectedDays(task.repeat.days || []);
     setSelectedDayOfMonth(task.repeat.dayOfMonth);
+    setSelectedMonth(task.repeat.month);
   };
 
   const handleBackToList = () => {
@@ -85,6 +90,7 @@ export default function TasksPage() {
     setRepeatType('none');
     setSelectedDays([]);
     setSelectedDayOfMonth(undefined);
+    setSelectedMonth(undefined);
   };
   
   const handleSaveRepeat = () => {
@@ -97,6 +103,7 @@ export default function TasksPage() {
           }
           if (repeatType === 'monthly') {
             newRepeat.dayOfMonth = selectedDayOfMonth;
+            newRepeat.month = selectedMonth;
           }
           return { ...task, repeat: newRepeat };
         }
@@ -164,8 +171,20 @@ export default function TasksPage() {
             )}
 
             {repeatType === 'monthly' && (
-              <Card className="p-4 bg-background/50">
-                <h4 className="font-medium mb-3">Repeat on day</h4>
+              <Card className="p-4 bg-background/50 space-y-4">
+                 <Select onValueChange={(value) => setSelectedMonth(value as Month)} value={selectedMonth}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a month to repeat on" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map(month => (
+                            <SelectItem key={month} value={month} className="capitalize">
+                                {month}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
                 <div className="grid grid-cols-7 gap-1">
                   {monthDays.map(day => (
                     <Button
