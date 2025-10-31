@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, ArrowLeft, Repeat } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Repeat, Check } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from '@/lib/utils';
+import { SaveButton } from '@/components/ui/save-button';
 
 
 type RepeatType = 'daily' | 'weekly' | 'monthly' | 'none';
@@ -86,6 +87,7 @@ export default function TasksPage() {
 
   // Temporary state for the detail view while editing
   const [editingRepeat, setEditingRepeat] = useState<RepeatOptions | null>(null);
+  const [isSaved, setIsSaved] = useState(true);
 
   const daysInSelectedMonth = useMemo(() => {
     if (!editingRepeat || editingRepeat.type !== 'monthly' || !editingRepeat.month) return [];
@@ -123,14 +125,21 @@ export default function TasksPage() {
     setSelectedTaskId(task.id);
     // Create a deep copy for editing to avoid mutating state directly
     setEditingRepeat(JSON.parse(JSON.stringify(task.repeat)));
+    setIsSaved(true);
   };
-
-  const handleBackToList = () => {
-    // On back, save the changes from editingRepeat to the actual tasks state
+  
+  const handleSaveChanges = () => {
     if (selectedTaskId && editingRepeat) {
       setTasks(tasks.map(task => 
         task.id === selectedTaskId ? { ...task, repeat: editingRepeat } : task
       ));
+    }
+    setIsSaved(true);
+  }
+
+  const handleBackToList = () => {
+    if (!isSaved) {
+       handleSaveChanges();
     }
     setSelectedTaskId(null);
     setEditingRepeat(null);
@@ -138,7 +147,7 @@ export default function TasksPage() {
   
   const handleDaySelection = (day: DayOfWeek) => {
     if (!editingRepeat) return;
-
+    setIsSaved(false);
     const currentDays = editingRepeat.days || [];
     const newSelectedDays = currentDays.includes(day)
       ? currentDays.filter(d => d !== day)
@@ -153,6 +162,7 @@ export default function TasksPage() {
 
   const handleDayOfMonthSelection = (day: number) => {
       if (!editingRepeat) return;
+      setIsSaved(false);
       setEditingRepeat({
           ...editingRepeat,
           type: 'monthly',
@@ -162,6 +172,7 @@ export default function TasksPage() {
   
   const handleMonthSelection = (month: Month) => {
     if (!editingRepeat) return;
+    setIsSaved(false);
     setEditingRepeat({
       ...editingRepeat,
       month: month,
@@ -172,6 +183,7 @@ export default function TasksPage() {
 
   const handleRepeatTypeChange = (value: RepeatType) => {
     if(!editingRepeat) return;
+    setIsSaved(false);
     const newRepeat: RepeatOptions = { type: value };
     if (value === 'monthly') {
       newRepeat.month = currentMonthName;
@@ -183,8 +195,8 @@ export default function TasksPage() {
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
 
   if (selectedTask && editingRepeat) {
-    const showWeeklySelector = editingRepeat.type === 'weekly' && (!editingRepeat.days || editingRepeat.days.length === 0);
-    const showMonthlySelector = editingRepeat.type === 'monthly' && !editingRepeat.dayOfMonth;
+    const showWeeklySelector = editingRepeat.type === 'weekly';
+    const showMonthlySelector = editingRepeat.type === 'monthly';
 
     return (
       <main className="p-8 md:p-12">
@@ -203,7 +215,7 @@ export default function TasksPage() {
                 <Label className="text-base font-medium">Repeat</Label>
               </div>
               <div className="flex items-center gap-4">
-                 <span className="text-sm text-muted-foreground">{getRepeatSummary(editingRepeat)}</span>
+                 {isSaved && <span className="text-sm text-muted-foreground">{getRepeatSummary(editingRepeat)}</span>}
                  <Select value={editingRepeat.type} onValueChange={(value) => handleRepeatTypeChange(value as RepeatType)}>
                     <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select frequency" />
@@ -218,56 +230,61 @@ export default function TasksPage() {
               </div>
             </div>
 
-            {editingRepeat.type === 'weekly' && (
-              <Card className="p-4 bg-background/50">
-                <div className="flex justify-between items-center">
-                    {weekdays.map(day => (
-                        <button
-                            key={day} 
-                            onClick={() => handleDaySelection(day)}
-                            className={cn(
-                                "flex items-center justify-center h-9 w-9 rounded-full border-2 transition-colors",
-                                editingRepeat.days?.includes(day) 
-                                    ? "border-primary bg-primary/10 text-primary" 
-                                    : "border-transparent hover:bg-secondary"
-                            )}
-                        >
-                            <span className="text-sm font-medium">{day.substring(0,1).toUpperCase()}</span>
-                        </button>
-                    ))}
-                </div>
-              </Card>
-            )}
-
-            {editingRepeat.type === 'monthly' && (
-              <Card className="p-4 bg-background/50 space-y-4">
-                 <Select onValueChange={(value) => handleMonthSelection(value as Month)} value={editingRepeat.month}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a month to repeat on" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {months.map(month => (
-                            <SelectItem key={month} value={month} className="capitalize">
-                                {month}
-                            </SelectItem>
+            {!isSaved && (
+              <>
+                {showWeeklySelector && (
+                  <Card className="p-4 bg-background/50">
+                    <div className="flex justify-between items-center">
+                        {weekdays.map(day => (
+                            <button
+                                key={day} 
+                                onClick={() => handleDaySelection(day)}
+                                className={cn(
+                                    "flex items-center justify-center h-9 w-9 rounded-full border-2 transition-colors",
+                                    editingRepeat.days?.includes(day) 
+                                        ? "border-primary bg-primary/10 text-primary" 
+                                        : "border-transparent hover:bg-secondary"
+                                )}
+                            >
+                                <span className="text-sm font-medium">{day.substring(0,1).toUpperCase()}</span>
+                            </button>
                         ))}
-                    </SelectContent>
-                </Select>
+                    </div>
+                  </Card>
+                )}
 
-                <div className="grid grid-cols-7 gap-1">
-                  {daysInSelectedMonth.map(day => (
-                    <Button
-                      key={day}
-                      variant={editingRepeat.dayOfMonth === day ? 'secondary' : 'ghost'}
-                      size="icon"
-                      onClick={() => handleDayOfMonthSelection(day)}
-                      className="h-9 w-9"
-                    >
-                      {day}
-                    </Button>
-                  ))}
-                </div>
-              </Card>
+                {showMonthlySelector && (
+                  <Card className="p-4 bg-background/50 space-y-4">
+                    <Select onValueChange={(value) => handleMonthSelection(value as Month)} value={editingRepeat.month}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a month to repeat on" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {months.map(month => (
+                                <SelectItem key={month} value={month} className="capitalize">
+                                    {month}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <div className="grid grid-cols-7 gap-1">
+                      {daysInSelectedMonth.map(day => (
+                        <Button
+                          key={day}
+                          variant={editingRepeat.dayOfMonth === day ? 'secondary' : 'ghost'}
+                          size="icon"
+                          onClick={() => handleDayOfMonthSelection(day)}
+                          className="h-9 w-9"
+                        >
+                          {day}
+                        </Button>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+                <SaveButton onSave={handleSaveChanges} />
+              </>
             )}
 
           </div>
