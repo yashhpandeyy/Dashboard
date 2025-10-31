@@ -3,31 +3,46 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+
+type RepeatType = 'daily' | 'weekly' | 'monthly' | 'none';
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+interface RepeatOptions {
+  type: RepeatType;
+  days?: DayOfWeek[]; // For weekly repeats
+}
 
 interface Task {
   id: number;
   text: string;
   completed: boolean;
-  description: string;
+  repeat: RepeatOptions;
 }
+
+const weekdays: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskText, setNewTaskText] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [description, setDescription] = useState('');
+
+  // State for the repeat functionality in the detail view
+  const [repeatType, setRepeatType] = useState<RepeatType>('none');
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
+
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskText.trim() !== '') {
       setTasks([
         ...tasks,
-        { id: Date.now(), text: newTaskText, completed: false, description: '' },
+        { id: Date.now(), text: newTaskText, completed: false, repeat: { type: 'none' } },
       ]);
       setNewTaskText('');
     }
@@ -47,22 +62,37 @@ export default function TasksPage() {
 
   const handleCardClick = (task: Task) => {
     setSelectedTaskId(task.id);
-    setDescription(task.description);
+    setRepeatType(task.repeat.type);
+    setSelectedDays(task.repeat.days || []);
   };
 
   const handleBackToList = () => {
     setSelectedTaskId(null);
-    setDescription('');
+    setRepeatType('none');
+    setSelectedDays([]);
   };
   
-  const handleSaveDescription = () => {
+  const handleSaveRepeat = () => {
     if (selectedTaskId !== null) {
-      setTasks(tasks.map(task => 
-        task.id === selectedTaskId ? { ...task, description: description } : task
-      ));
+      setTasks(tasks.map(task => {
+        if (task.id === selectedTaskId) {
+          const newRepeat: RepeatOptions = { type: repeatType };
+          if (repeatType === 'weekly') {
+            newRepeat.days = selectedDays;
+          }
+          return { ...task, repeat: newRepeat };
+        }
+        return task;
+      }));
       handleBackToList();
     }
   };
+
+  const handleDaySelection = (day: DayOfWeek) => {
+    setSelectedDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    )
+  }
 
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
 
@@ -75,18 +105,49 @@ export default function TasksPage() {
             Back to tasks
           </Button>
           <h1 className="text-3xl font-bold mb-2">{selectedTask.text}</h1>
-          <p className="text-muted-foreground mb-6">Add a description for your task.</p>
+          <p className="text-muted-foreground mb-6">Set recurrence for this task.</p>
           
-          <div className="space-y-4">
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add your description here..."
-              className="min-h-[200px] bg-background"
-            />
-            <Button onClick={handleSaveDescription} className="w-full">
+          <div className="space-y-6">
+            <RadioGroup value={repeatType} onValueChange={(value) => setRepeatType(value as RepeatType)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="none" id="none" />
+                <Label htmlFor="none">None</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="daily" id="daily" />
+                <Label htmlFor="daily">Daily</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="weekly" id="weekly" />
+                <Label htmlFor="weekly">Weekly</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="monthly" id="monthly" />
+                <Label htmlFor="monthly">Monthly</Label>
+              </div>
+            </RadioGroup>
+
+            {repeatType === 'weekly' && (
+              <Card className="p-4 bg-background/50">
+                <h4 className="font-medium mb-3">Repeat on</h4>
+                <div className="grid grid-cols-4 gap-2">
+                    {weekdays.map(day => (
+                        <Button 
+                            key={day} 
+                            variant={selectedDays.includes(day) ? 'secondary' : 'ghost'}
+                            onClick={() => handleDaySelection(day)}
+                            className="capitalize"
+                        >
+                            {day.substring(0,3)}
+                        </Button>
+                    ))}
+                </div>
+              </Card>
+            )}
+
+            <Button onClick={handleSaveRepeat} className="w-full">
               <Save className="mr-2 h-4 w-4" />
-              Save Description
+              Save Repeat Settings
             </Button>
           </div>
         </div>
