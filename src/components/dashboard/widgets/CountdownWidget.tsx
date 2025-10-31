@@ -6,6 +6,8 @@ export function CountdownWidget() {
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
 
   useEffect(() => {
+    let animationFrameId: number;
+
     const calculateTimeLeft = () => {
       const now = new Date();
       const endOfDay = new Date(now);
@@ -14,25 +16,26 @@ export function CountdownWidget() {
       const difference = endOfDay.getTime() - now.getTime();
 
       if (difference > 0) {
-        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const totalMinutes = Math.floor(difference / (1000 * 60));
         const seconds = Math.floor((difference / 1000) % 60);
+        const milliseconds = Math.floor(difference % 1000);
 
-        const formattedHours = hours.toString().padStart(2, '0');
-        const formattedMinutes = minutes.toString().padStart(2, '0');
+        const formattedMinutes = totalMinutes.toString().padStart(2, '0');
         const formattedSeconds = seconds.toString().padStart(2, '0');
+        const formattedMilliseconds = milliseconds.toString().padStart(3, '0');
 
-        setTimeLeft(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`);
+        setTimeLeft(`${formattedMinutes}:${formattedSeconds}:${formattedMilliseconds}`);
       } else {
-        setTimeLeft('00:00:00');
+        setTimeLeft('00:00:000');
       }
+      
+      animationFrameId = requestAnimationFrame(calculateTimeLeft);
     };
     
-    calculateTimeLeft();
-    const timerId = setInterval(calculateTimeLeft, 1000);
+    animationFrameId = requestAnimationFrame(calculateTimeLeft);
 
     return () => {
-      clearInterval(timerId);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
@@ -43,7 +46,7 @@ export function CountdownWidget() {
           {timeLeft ?? 'Loading...'}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Until Day End
+          Until Day End (MM:SS:ms)
         </p>
       </div>
     </div>
