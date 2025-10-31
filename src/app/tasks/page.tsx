@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, ArrowLeft, Save, Repeat, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Repeat } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -48,9 +48,8 @@ const getRepeatSummary = (repeat: RepeatOptions) => {
         case 'weekly':
             if (!repeat.days || repeat.days.length === 0) return 'Weekly';
             if (repeat.days.length === 7) return 'Everyday';
-            if (repeat.days.length === 1) return repeat.days[0].charAt(0).toUpperCase() + repeat.days[0].slice(1, 3);
+            if (repeat.days.length === 1) return repeat.days[0].charAt(0).toUpperCase() + repeat.days[0].slice(1);
             
-            // Check for consecutive days
             const dayIndexes = repeat.days.map(d => weekdays.indexOf(d)).sort((a,b) => a - b);
             let isConsecutive = true;
             for(let i=0; i< dayIndexes.length - 1; i++) {
@@ -59,19 +58,21 @@ const getRepeatSummary = (repeat: RepeatOptions) => {
                     break;
                 }
             }
-            if(isConsecutive) {
-                const startDay = weekdays[dayIndexes[0]].substring(0,1).toUpperCase();
-                const endDay = weekdays[dayIndexes[dayIndexes.length - 1]].substring(0,1).toUpperCase();
+            if(isConsecutive && dayIndexes.length > 2) {
+                const startDay = weekdays[dayIndexes[0]].substring(0,3);
+                const endDay = weekdays[dayIndexes[dayIndexes.length - 1]].substring(0,3);
                 return `${startDay}-${endDay}`;
             }
 
-            return repeat.days.map(d => d.substring(0,1).toUpperCase()).join(', ');
+            return repeat.days.map(d => d.substring(0,3)).join(', ');
 
         case 'monthly':
             if (repeat.month && repeat.dayOfMonth) {
                 return `${repeat.month.substring(0,3)} ${repeat.dayOfMonth}`;
             }
             return 'Monthly';
+        case 'none':
+             return 'None';
         default:
             return null;
     }
@@ -83,20 +84,16 @@ export default function TasksPage() {
   const [newTaskText, setNewTaskText] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
-  // State for the repeat functionality in the detail view
-  const [repeatType, setRepeatType] = useState<RepeatType>('none');
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
-  const [selectedDayOfMonth, setSelectedDayOfMonth] = useState<number | undefined>(undefined);
-  const [selectedMonth, setSelectedMonth] = useState<Month>(currentMonthName);
-
+  // Temporary state for the detail view while editing
+  const [editingRepeat, setEditingRepeat] = useState<RepeatOptions | null>(null);
 
   const daysInSelectedMonth = useMemo(() => {
-    if (!selectedMonth) return [];
-    const monthIndex = months.indexOf(selectedMonth);
+    if (!editingRepeat || editingRepeat.type !== 'monthly' || !editingRepeat.month) return [];
+    const monthIndex = months.indexOf(editingRepeat.month);
     const year = new Date().getFullYear();
     const days = new Date(year, monthIndex + 1, 0).getDate();
     return Array.from({ length: days }, (_, i) => i + 1);
-  }, [selectedMonth]);
+  }, [editingRepeat]);
 
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -124,58 +121,71 @@ export default function TasksPage() {
 
   const handleCardClick = (task: Task) => {
     setSelectedTaskId(task.id);
-    setRepeatType(task.repeat.type);
-    setSelectedDays(task.repeat.days || []);
-    setSelectedDayOfMonth(task.repeat.dayOfMonth);
-    setSelectedMonth(task.repeat.month || currentMonthName);
+    // Create a deep copy for editing to avoid mutating state directly
+    setEditingRepeat(JSON.parse(JSON.stringify(task.repeat)));
   };
 
   const handleBackToList = () => {
+    // On back, save the changes from editingRepeat to the actual tasks state
+    if (selectedTaskId && editingRepeat) {
+      setTasks(tasks.map(task => 
+        task.id === selectedTaskId ? { ...task, repeat: editingRepeat } : task
+      ));
+    }
     setSelectedTaskId(null);
+    setEditingRepeat(null);
   };
   
-  const updateTaskRepeat = (taskId: number, repeatOptions: RepeatOptions) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, repeat: repeatOptions } : task
-    ));
-    handleBackToList();
-  };
-
   const handleDaySelection = (day: DayOfWeek) => {
-    const newSelectedDays = selectedDays.includes(day)
-      ? selectedDays.filter(d => d !== day)
-      : [...selectedDays, day];
-    
-    setSelectedDays(newSelectedDays);
+    if (!editingRepeat) return;
 
-    if(selectedTaskId !== null) {
-        updateTaskRepeat(selectedTaskId, { type: 'weekly', days: newSelectedDays });
-    }
+    const currentDays = editingRepeat.days || [];
+    const newSelectedDays = currentDays.includes(day)
+      ? currentDays.filter(d => d !== day)
+      : [...currentDays, day];
+    
+    setEditingRepeat({
+        ...editingRepeat,
+        type: 'weekly',
+        days: newSelectedDays
+    });
   };
 
   const handleDayOfMonthSelection = (day: number) => {
-      setSelectedDayOfMonth(day);
-      if(selectedTaskId !== null) {
-          updateTaskRepeat(selectedTaskId, { type: 'monthly', dayOfMonth: day, month: selectedMonth });
-      }
+      if (!editingRepeat) return;
+      setEditingRepeat({
+          ...editingRepeat,
+          type: 'monthly',
+          dayOfMonth: day
+      });
+  }
+  
+  const handleMonthSelection = (month: Month) => {
+    if (!editingRepeat) return;
+    setEditingRepeat({
+      ...editingRepeat,
+      month: month,
+      // Reset day if it's invalid for the new month
+      dayOfMonth: editingRepeat.dayOfMonth
+    });
   }
 
   const handleRepeatTypeChange = (value: RepeatType) => {
-    setRepeatType(value);
-    if(selectedTaskId) {
-      if(value === 'daily' || value === 'none') {
-        updateTaskRepeat(selectedTaskId, { type: value });
-      } else {
-        // For weekly/monthly, we wait for further user input
-        setTasks(tasks.map(task => task.id === selectedTaskId ? { ...task, repeat: {type: value} } : task));
-      }
+    if(!editingRepeat) return;
+    const newRepeat: RepeatOptions = { type: value };
+    if (value === 'monthly') {
+      newRepeat.month = currentMonthName;
     }
+    setEditingRepeat(newRepeat);
   }
 
 
   const selectedTask = tasks.find(task => task.id === selectedTaskId);
 
-  if (selectedTask) {
+  if (selectedTask && editingRepeat) {
+    const showWeeklySelector = editingRepeat.type === 'weekly' && (!editingRepeat.days || editingRepeat.days.length === 0);
+    const showMonthlySelector = editingRepeat.type === 'monthly' && !editingRepeat.dayOfMonth;
+
     return (
       <main className="p-8 md:p-12">
         <div className="max-w-2xl mx-auto">
@@ -192,21 +202,23 @@ export default function TasksPage() {
                 <Repeat className="h-5 w-5 text-muted-foreground" />
                 <Label className="text-base font-medium">Repeat</Label>
               </div>
-              <Select value={repeatType} onValueChange={(value) => handleRepeatTypeChange(value as RepeatType)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-4">
+                 <span className="text-sm text-muted-foreground">{getRepeatSummary(editingRepeat)}</span>
+                 <Select value={editingRepeat.type} onValueChange={(value) => handleRepeatTypeChange(value as RepeatType)}>
+                    <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                </Select>
+              </div>
             </div>
 
-
-            {repeatType === 'weekly' && (
+            {editingRepeat.type === 'weekly' && (
               <Card className="p-4 bg-background/50">
                 <div className="flex justify-between items-center">
                     {weekdays.map(day => (
@@ -215,8 +227,8 @@ export default function TasksPage() {
                             onClick={() => handleDaySelection(day)}
                             className={cn(
                                 "flex items-center justify-center h-9 w-9 rounded-full border-2 transition-colors",
-                                selectedDays.includes(day) 
-                                    ? "border-primary bg-primary/10 text-primary-foreground" 
+                                editingRepeat.days?.includes(day) 
+                                    ? "border-primary bg-primary/10 text-primary" 
                                     : "border-transparent hover:bg-secondary"
                             )}
                         >
@@ -227,9 +239,9 @@ export default function TasksPage() {
               </Card>
             )}
 
-            {repeatType === 'monthly' && (
+            {editingRepeat.type === 'monthly' && (
               <Card className="p-4 bg-background/50 space-y-4">
-                 <Select onValueChange={(value) => setSelectedMonth(value as Month)} value={selectedMonth}>
+                 <Select onValueChange={(value) => handleMonthSelection(value as Month)} value={editingRepeat.month}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a month to repeat on" />
                     </SelectTrigger>
@@ -246,7 +258,7 @@ export default function TasksPage() {
                   {daysInSelectedMonth.map(day => (
                     <Button
                       key={day}
-                      variant={selectedDayOfMonth === day ? 'secondary' : 'ghost'}
+                      variant={editingRepeat.dayOfMonth === day ? 'secondary' : 'ghost'}
                       size="icon"
                       onClick={() => handleDayOfMonthSelection(day)}
                       className="h-9 w-9"
