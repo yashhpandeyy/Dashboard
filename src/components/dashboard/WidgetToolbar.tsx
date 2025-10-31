@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, PlusCircle, Clock, Search, Link } from 'lucide-react';
+import { Menu, PlusCircle, Clock, Search, Link, Timer } from 'lucide-react';
 import type { WidgetType } from '@/lib/types';
 import { ThemeSelector } from './ThemeSelector';
 import { Separator } from '../ui/separator';
@@ -22,6 +22,7 @@ const availableWidgets: { type: WidgetType; name: string; icon: React.ElementTyp
   { type: 'Clock', name: 'Clock', icon: Clock },
   { type: 'Search', name: 'Search Bar', icon: Search },
   { type: 'Tabs', name: 'Link Tabs', icon: Link },
+  { type: 'Countdown', name: 'Day End Countdown', icon: Timer },
 ];
 
 export function WidgetToolbar({ addWidget }: WidgetToolbarProps) {

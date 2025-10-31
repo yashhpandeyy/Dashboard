@@ -7,6 +7,7 @@ import { WidgetToolbar } from './WidgetToolbar';
 import { ClockWidget } from './widgets/ClockWidget';
 import { SearchWidget } from './widgets/SearchWidget';
 import { TabsWidget } from './widgets/TabsWidget';
+import { CountdownWidget } from './widgets/CountdownWidget';
 import { Button } from '../ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   Clock: ClockWidget,
   Search: SearchWidget,
   Tabs: TabsWidget,
+  Countdown: CountdownWidget,
 };
 
 const LOCAL_STORAGE_KEY = 'dark-knight-dashboard-layout';
