@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
@@ -38,8 +38,8 @@ interface Task {
 }
 
 const weekdays: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const monthDays = Array.from({ length: 31 }, (_, i) => i + 1);
 const months: Month[] = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const currentMonthName = months[new Date().getMonth()];
 
 
 export default function TasksPage() {
@@ -51,7 +51,16 @@ export default function TasksPage() {
   const [repeatType, setRepeatType] = useState<RepeatType>('none');
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [selectedDayOfMonth, setSelectedDayOfMonth] = useState<number | undefined>(undefined);
-  const [selectedMonth, setSelectedMonth] = useState<Month | undefined>(undefined);
+  const [selectedMonth, setSelectedMonth] = useState<Month>(currentMonthName);
+
+
+  const daysInSelectedMonth = useMemo(() => {
+    if (!selectedMonth) return [];
+    const monthIndex = months.indexOf(selectedMonth);
+    const year = new Date().getFullYear();
+    const days = new Date(year, monthIndex + 1, 0).getDate();
+    return Array.from({ length: days }, (_, i) => i + 1);
+  }, [selectedMonth]);
 
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -82,15 +91,11 @@ export default function TasksPage() {
     setRepeatType(task.repeat.type);
     setSelectedDays(task.repeat.days || []);
     setSelectedDayOfMonth(task.repeat.dayOfMonth);
-    setSelectedMonth(task.repeat.month);
+    setSelectedMonth(task.repeat.month || currentMonthName);
   };
 
   const handleBackToList = () => {
     setSelectedTaskId(null);
-    setRepeatType('none');
-    setSelectedDays([]);
-    setSelectedDayOfMonth(undefined);
-    setSelectedMonth(undefined);
   };
   
   const handleSaveRepeat = () => {
@@ -186,7 +191,7 @@ export default function TasksPage() {
                 </Select>
 
                 <div className="grid grid-cols-7 gap-1">
-                  {monthDays.map(day => (
+                  {daysInSelectedMonth.map(day => (
                     <Button
                       key={day}
                       variant={selectedDayOfMonth === day ? 'secondary' : 'ghost'}
