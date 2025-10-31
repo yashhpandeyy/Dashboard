@@ -91,35 +91,44 @@ export function WidgetContainer({
 
   return (
     <div
-      className="absolute flex flex-col bg-black/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg"
+      className={cn(
+        "absolute flex flex-col bg-black/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg",
+        !isLocked && 'cursor-grab active:cursor-grabbing'
+      )}
       style={{
         transform: `translate(${widget.position.x}px, ${widget.position.y}px)`,
         width: `${widget.size?.width ?? 280}px`,
         height: `${widget.size?.height ?? 150}px`,
       }}
+      onMouseDown={handleDragMouseDown}
     >
-      <div
-        className={cn(
-          'relative flex h-8 items-center justify-center rounded-t-xl bg-black/20',
-          !isLocked && 'cursor-grab active:cursor-grabbing'
-        )}
-        onMouseDown={handleDragMouseDown}
-      >
-        {!isLocked && <GripVertical className="h-5 w-5 text-muted-foreground" />}
+       {!isLocked && (
+         <div className="absolute top-1/2 left-2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-10" onMouseDown={(e) => {
+           // Allow drag handle to work, but don't propagate to the whole card
+           e.stopPropagation();
+           handleDragMouseDown(e);
+         }}>
+           <GripVertical className="h-5 w-5 text-muted-foreground/50" />
+         </div>
+       )}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-          onClick={() => toggleWidgetLock(widget.id)}
+          className="absolute right-1 top-1 h-7 w-7 z-10"
+          onClick={(e) => {
+             e.stopPropagation();
+             toggleWidgetLock(widget.id);
+          }}
+           onMouseDown={(e) => e.stopPropagation()} // Prevent card drag
         >
           {isLocked ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
           <span className="sr-only">{isLocked ? 'Unlock' : 'Lock'} widget</span>
         </Button>
-      </div>
-      <div className="flex-grow h-full overflow-hidden">{children}</div>
+
+      <div className="flex-grow h-full overflow-hidden rounded-xl">{children}</div>
       {!isLocked && (
         <div
-          className="absolute bottom-0 right-0 h-4 w-4 cursor-se-resize touch-none"
+          className="absolute bottom-0 right-0 h-4 w-4 cursor-se-resize touch-none z-10"
           onMouseDown={handleResizeMouseDown}
         />
       )}
