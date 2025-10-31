@@ -39,13 +39,13 @@ export default function Dashboard() {
       } else {
         // Default layout for new users
         setWidgets([
-          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false },
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false, backgroundDisabled: false },
         ]);
       }
     } catch (error) {
         console.error("Failed to parse layout from localStorage", error);
          setWidgets([
-          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false },
+          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false, backgroundDisabled: false },
         ]);
     }
   }, []);
@@ -57,6 +57,7 @@ export default function Dashboard() {
       position: { x: 50, y: 50 }, // Default position
       size: DEFAULT_WIDGET_SIZE,
       isLocked: false,
+      backgroundDisabled: false,
     };
     setWidgets((prev) => [...prev, newWidget]);
   }, []);
@@ -89,6 +90,14 @@ export default function Dashboard() {
     );
   }, []);
 
+  const toggleWidgetBackground = useCallback((id: string) => {
+    setWidgets((prevWidgets) =>
+      prevWidgets.map((widget) =>
+        widget.id === id ? { ...widget, backgroundDisabled: !widget.backgroundDisabled } : widget
+      )
+    );
+  }, []);
+
   const handleSave = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(widgets));
     toast({
@@ -114,6 +123,7 @@ export default function Dashboard() {
             updateWidgetPosition={updateWidgetPosition}
             updateWidgetSize={updateWidgetSize}
             toggleWidgetLock={toggleWidgetLock}
+            toggleWidgetBackground={toggleWidgetBackground}
             onDragStart={() => setDraggingWidgetId(widget.id)}
             onDragEnd={() => setDraggingWidgetId(null)}
           >

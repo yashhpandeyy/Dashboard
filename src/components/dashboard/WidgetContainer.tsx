@@ -13,6 +13,7 @@ interface WidgetContainerProps {
   updateWidgetPosition: (id: string, position: { x: number; y: number }) => void;
   updateWidgetSize: (id: string, size: { width: number; height: number }) => void;
   toggleWidgetLock: (id: string) => void;
+  toggleWidgetBackground: (id: string) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
 }
@@ -23,6 +24,7 @@ export function WidgetContainer({
   updateWidgetPosition, 
   updateWidgetSize, 
   toggleWidgetLock,
+  toggleWidgetBackground,
   onDragStart,
   onDragEnd,
 }: WidgetContainerProps) {
@@ -94,13 +96,19 @@ export function WidgetContainer({
     document.removeEventListener('mousemove', handleResizeMouseMove);
     document.removeEventListener('mouseup', handleResizeMouseUp);
   };
+
+  const handleDoubleClick = () => {
+    toggleWidgetBackground(widget.id);
+  };
   
   const isLocked = widget.isLocked ?? false;
+  const backgroundDisabled = widget.backgroundDisabled ?? false;
 
   return (
     <div
       className={cn(
-        "absolute flex flex-col bg-black/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg transition-transform",
+        "absolute flex flex-col rounded-xl transition-all",
+        !backgroundDisabled && "bg-black/5 backdrop-blur-lg border border-white/10 shadow-lg",
         !isLocked && 'cursor-grab active:cursor-grabbing'
       )}
       style={{
@@ -109,6 +117,7 @@ export function WidgetContainer({
         height: `${widget.size?.height ?? 150}px`,
       }}
       onMouseDown={handleDragMouseDown}
+      onDoubleClick={handleDoubleClick}
     >
        {!isLocked && (
          <div className="absolute top-1/2 left-2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-10" onMouseDown={(e) => {
