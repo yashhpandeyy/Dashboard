@@ -3,11 +3,10 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, ArrowLeft, Save } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Repeat } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -138,24 +137,24 @@ export default function TasksPage() {
           <p className="text-muted-foreground mb-6">Set recurrence for this task.</p>
           
           <div className="space-y-6">
-            <RadioGroup value={repeatType} onValueChange={(value) => setRepeatType(value as RepeatType)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="none" id="none" />
-                <Label htmlFor="none">None</Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Repeat className="h-5 w-5 text-muted-foreground" />
+                <Label className="text-base font-medium">Repeat</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="daily" id="daily" />
-                <Label htmlFor="daily">Daily</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="weekly" id="weekly" />
-                <Label htmlFor="weekly">Weekly</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="monthly" id="monthly" />
-                <Label htmlFor="monthly">Monthly</Label>
-              </div>
-            </RadioGroup>
+              <Select value={repeatType} onValueChange={(value) => setRepeatType(value as RepeatType)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
 
             {repeatType === 'weekly' && (
               <Card className="p-4 bg-background/50">
@@ -254,9 +253,10 @@ export default function TasksPage() {
                       />
                       <label
                         htmlFor={`task-${task.id}`}
-                        className={`flex-grow text-base cursor-pointer ${
+                        className={cn(
+                          'flex-grow text-base cursor-pointer',
                           task.completed ? 'text-muted-foreground line-through' : ''
-                        }`}
+                        )}
                       >
                         {task.text}
                       </label>
