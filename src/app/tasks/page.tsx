@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { cn } from '@/lib/utils';
 
 
 type RepeatType = 'daily' | 'weekly' | 'monthly' | 'none';
@@ -165,21 +166,19 @@ export default function TasksPage() {
             {repeatType === 'monthly' && (
               <Card className="p-4 bg-background/50">
                 <h4 className="font-medium mb-3">Repeat on day</h4>
-                 <Select
-                    value={selectedDayOfMonth?.toString()}
-                    onValueChange={(value) => setSelectedDayOfMonth(Number(value))}
-                  >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a day of the month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {monthDays.map(day => (
-                      <SelectItem key={day} value={day.toString()}>
-                        {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map(day => (
+                    <Button
+                      key={day}
+                      variant={selectedDayOfMonth === day ? 'secondary' : 'ghost'}
+                      size="icon"
+                      onClick={() => setSelectedDayOfMonth(day)}
+                      className="h-9 w-9"
+                    >
+                      {day}
+                    </Button>
+                  ))}
+                </div>
               </Card>
             )}
 
