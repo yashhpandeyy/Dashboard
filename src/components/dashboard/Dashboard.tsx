@@ -24,7 +24,13 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType<any>> = {
 
 const LOCAL_STORAGE_KEY = 'dark-knight-dashboard-layout';
 
-const DEFAULT_WIDGET_SIZE = { width: 280, height: 150 };
+const DEFAULT_WIDGET_SIZE: Record<WidgetType, { width: number, height: number }> = {
+  Clock: { width: 280, height: 150 },
+  Search: { width: 280, height: 150 },
+  Tabs: { width: 280, height: 150 },
+  Countdown: { width: 280, height: 150 },
+  Link: { width: 280, height: 180 },
+};
 
 export default function Dashboard() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>([]);
@@ -41,13 +47,13 @@ export default function Dashboard() {
       } else {
         // Default layout for new users
         setWidgets([
-          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false, backgroundDisabled: false },
+          { id: `widget-${Date.now()}`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE['Clock'], isLocked: false, backgroundDisabled: false },
         ]);
       }
     } catch (error) {
         console.error("Failed to parse layout from localStorage", error);
          setWidgets([
-          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE, isLocked: false, backgroundDisabled: false },
+          { id: `widget-default`, type: 'Clock', position: { x: 100, y: 100 }, size: DEFAULT_WIDGET_SIZE['Clock'], isLocked: false, backgroundDisabled: false },
         ]);
     }
   }, []);
@@ -57,7 +63,7 @@ export default function Dashboard() {
       id: `widget-${Date.now()}`,
       type,
       position: { x: 50, y: 50 }, // Default position
-      size: DEFAULT_WIDGET_SIZE,
+      size: DEFAULT_WIDGET_SIZE[type],
       isLocked: false,
       backgroundDisabled: false,
     };
@@ -137,7 +143,7 @@ export default function Dashboard() {
             onDragStart={() => setDraggingWidgetId(widget.id)}
             onDragEnd={() => setDraggingWidgetId(null)}
           >
-            {WidgetComponent ? <WidgetComponent widgetData={widget.data} updateWidgetData={(data: any) => updateWidgetData(widget.id, data)} /> : <div>Unknown Widget</div>}
+            {WidgetComponent ? <WidgetComponent widget={widget} updateWidgetData={(data: any) => updateWidgetData(widget.id, data)} /> : <div>Unknown Widget</div>}
           </WidgetContainer>
         );
       })}

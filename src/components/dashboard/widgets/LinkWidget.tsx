@@ -4,17 +4,16 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Settings, Check, ExternalLink, Link as LinkIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import type { WidgetInstance } from '@/lib/types';
+
 
 interface LinkWidgetProps {
-    widgetData?: {
-        title?: string;
-        url?: string;
-    };
+    widget: WidgetInstance;
     updateWidgetData: (data: { title: string; url: string }) => void;
 }
 
-export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
+export function LinkWidget({ widget, updateWidgetData }: LinkWidgetProps) {
+  const { data: widgetData, isLocked, backgroundDisabled } = widget;
   const [isEditing, setIsEditing] = useState(!widgetData?.url);
   const [title, setTitle] = useState(widgetData?.title || '');
   const [url, setUrl] = useState(widgetData?.url || '');
@@ -41,9 +40,16 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
   
   const favicon = widgetData?.url ? getFaviconUrl(widgetData.url) : null;
 
+  const handleClick = () => {
+    if ((isLocked || backgroundDisabled) && widgetData?.url) {
+       window.open(widgetData.url, '_blank');
+    }
+  }
+
   if (isEditing) {
     return (
       <div className="flex h-full w-full flex-col justify-center gap-2 p-4">
+        <h3 className="font-medium text-center text-foreground pb-1">Bookmark</h3>
         <Input
           placeholder="Title"
           value={title}
@@ -67,13 +73,13 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
 
   return (
     <div 
-        className="group relative flex h-full w-full cursor-pointer flex-col justify-between p-4"
-        onClick={() => window.open(widgetData?.url, '_blank')}
+        className="group relative flex h-full w-full flex-col justify-between p-4"
+        onClick={handleClick}
     >
         <Button
             variant="ghost"
             size="icon"
-            className="absolute top-1 right-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 z-10"
+            className="absolute top-1 left-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 z-10"
             onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
@@ -94,12 +100,10 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
                     {widgetData?.title}
                 </h3>
             </div>
-            
         </div>
         
-        <div className="flex items-center gap-2 pt-2">
-            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" />
-            <p className="truncate text-sm text-muted-foreground/70">{widgetData?.url?.replace(/^https?:\/\//, '')}</p>
+        <div className="flex items-center justify-end gap-2 pt-2">
+           {(isLocked || backgroundDisabled) && <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" />}
         </div>
     </div>
   );
