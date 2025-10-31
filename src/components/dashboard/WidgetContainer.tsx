@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
 import type { WidgetInstance } from '@/lib/types';
-import { GripVertical, Pin, PinOff } from 'lucide-react';
+import { GripVertical, Circle, CircleDot } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 
@@ -71,8 +71,8 @@ export function WidgetContainer({ widget, children, updateWidgetPosition, toggle
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                 onClick={() => toggleWidgetLock(widget.id)}
             >
-                {isLocked ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
-                <span className="sr-only">{isLocked ? 'Unpin' : 'Pin'} widget</span>
+                {isLocked ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                <span className="sr-only">{isLocked ? 'Unlock' : 'Lock'} widget</span>
             </Button>
         </div>
       <div className="flex-grow">{children}</div>
