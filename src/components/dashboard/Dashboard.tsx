@@ -57,7 +57,7 @@ export default function Dashboard() {
       id: `widget-${Date.now()}`,
       type,
       position: { x: 50, y: 50 }, // Default position
-      size: type === 'Link' ? { width: 280, height: 100 } : DEFAULT_WIDGET_SIZE,
+      size: DEFAULT_WIDGET_SIZE,
       isLocked: false,
       backgroundDisabled: false,
     };

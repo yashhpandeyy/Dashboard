@@ -70,6 +70,17 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
         className="group relative flex h-full w-full cursor-pointer flex-col justify-between p-4"
         onClick={() => window.open(widgetData?.url, '_blank')}
     >
+        <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-1 right-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 z-10"
+            onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+            }}
+        >
+            <Settings className="h-4 w-4" />
+        </Button>
         <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 {favicon ? (
@@ -79,21 +90,11 @@ export function LinkWidget({ widgetData, updateWidgetData }: LinkWidgetProps) {
                         <LinkIcon className="h-5 w-5 text-secondary-foreground" />
                     </div>
                 )}
-                <h3 className="text-xl font-bold text-foreground break-words">
+                <h3 className="text-xl font-bold text-foreground break-words pr-8">
                     {widgetData?.title}
                 </h3>
             </div>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-1 right-1 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                }}
-            >
-                <Settings className="h-4 w-4" />
-            </Button>
+            
         </div>
         
         <div className="flex items-center gap-2 pt-2">
