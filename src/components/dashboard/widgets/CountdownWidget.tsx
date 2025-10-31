@@ -46,7 +46,7 @@ export function CountdownWidget() {
           {timeLeft ?? 'Loading...'}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Until Day End (MM:SS:ms)
+          Until Day End
         </p>
       </div>
     </div>
