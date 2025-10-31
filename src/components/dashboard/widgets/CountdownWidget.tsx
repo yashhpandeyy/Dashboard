@@ -18,15 +18,15 @@ export function CountdownWidget() {
       if (difference > 0) {
         const totalMinutes = Math.floor(difference / (1000 * 60));
         const seconds = Math.floor((difference / 1000) % 60);
-        const milliseconds = Math.floor(difference % 1000);
+        const milliseconds = Math.floor((difference % 1000) / 10);
 
         const formattedMinutes = totalMinutes.toString().padStart(2, '0');
         const formattedSeconds = seconds.toString().padStart(2, '0');
-        const formattedMilliseconds = milliseconds.toString().padStart(3, '0');
+        const formattedMilliseconds = milliseconds.toString().padStart(2, '0');
 
         setTimeLeft(`${formattedMinutes}:${formattedSeconds}:${formattedMilliseconds}`);
       } else {
-        setTimeLeft('00:00:000');
+        setTimeLeft('00:00:00');
       }
       
       animationFrameId = requestAnimationFrame(calculateTimeLeft);
