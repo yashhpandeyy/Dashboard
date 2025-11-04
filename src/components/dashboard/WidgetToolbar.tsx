@@ -11,8 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Menu, PlusCircle, Clock, Search, Link as LinkIcon, Timer } from 'lucide-react';
 import type { WidgetType } from '@/lib/types';
-import { ThemeSelector } from './ThemeSelector';
-import { Separator } from '../ui/separator';
 
 interface WidgetToolbarProps {
   addWidget: (type: WidgetType) => void;
@@ -55,16 +53,6 @@ export function WidgetToolbar({ addWidget }: WidgetToolbarProps) {
               <PlusCircle className="ml-auto h-5 w-5 text-primary" />
             </Button>
           ))}
-        </div>
-        <Separator className="my-4 bg-border" />
-        <SheetHeader>
-            <SheetTitle>AI Theme Assistant</SheetTitle>
-            <SheetDescription>
-                Describe a theme you like, and our AI will give you suggestions.
-            </SheetDescription>
-        </SheetHeader>
-        <div className="py-4">
-          <ThemeSelector />
         </div>
       </SheetContent>
     </Sheet>
